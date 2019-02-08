@@ -40,6 +40,7 @@ class ProcessBatcher extends Process implements Module
             'deleteWithChildren' => $this->_('Delete (include child pages)'),
             'changeTemplate' => $this->_('Change Template'),
             'changeParent' => $this->_('Change Parent'),
+            'edit' => $this->_('Batch Edit'),
         );
     }
 
@@ -208,6 +209,13 @@ class ProcessBatcher extends Process implements Module
         $changeParent->notes = $this->_("The template of the new parent must accept the page's templates as children.");
         $actions->append($changeParent);
 
+        $changeParent = $this->modules->get('InputfieldTextarea');
+        $changeParent->label = $this->_('PHP Code to execute for each page');
+        $changeParent->attr('name+id', 'edit');
+        $changeParent->attr('class', 'batcherAction');
+        $changeParent->notes = $this->_("The script will be executed for each page and will receive the current page in the variable \$p.");
+        $actions->append($changeParent);
+
         $changeTemplate = $this->modules->get('InputfieldSelect');
         $templates = $this->getTemplates();
         $changeTemplate->addOptions($templates);
@@ -238,6 +246,7 @@ class ProcessBatcher extends Process implements Module
         if (!$this->user->hasPermission('page-delete')) unset($actions['deleteWithChildren']);
         if (!$this->user->hasPermission('page-move')) unset($actions['changeParent']);
         if (!$this->user->hasPermission('page-template')) unset($actions['changeTemplate']);
+        if (!$this->user->hasPermission('page-edit')) unset($actions['edit']);
         if (!$this->user->hasPermission('page-lock')) {
             unset($actions['lock']);
             unset($actions['unlock']);
@@ -693,6 +702,23 @@ class ProcessBatcher extends Process implements Module
                     $count++;
                 }
                 $message = $this->_(sprintf("Changed parent of %d pages", $count));
+                break;
+            case 'edit':
+                $script = $this->input->post->edit;
+                foreach ($pages as $p) {
+                    $p->of(false);
+                    try{
+                        $shouldSave = eval($script);
+                        if($shouldSave === true) {
+                            $p->save();
+                            $count++;
+                        }
+                    } catch(Throwable $t) {
+                        $this->error($t->getMessage());
+                        return;
+                    }
+                }
+                $message = $this->_(sprintf("Changed template of %d pages", $count));
                 break;
         }
         //Finished executing the action(s). We do a redirect and display messages with session
