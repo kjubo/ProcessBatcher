@@ -349,7 +349,7 @@ class ProcessBatcher extends Process implements Module
         );
 
         //If there were any errors, we fill up the table with the data sent
-        if (!count($this->input->post->title)) {
+        if (!$this->input->post->title || !count($this->input->post->title)) {
             $table->row($row);
         } else {
             /*Note that we use standard php $_POST array here, because only pages that were not created
