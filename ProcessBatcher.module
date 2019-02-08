@@ -160,7 +160,7 @@ class ProcessBatcher extends Process implements Module
 
             //We provide the same pages checked if for some reason an error happened before
             $checked = " checked='checked'";
-            if (count($this->input->post->pages) && $this->input->post->a == $this->_('Execute')) {
+            if ($this->input->post->pages && count($this->input->post->pages) && $this->input->post->a == $this->_('Execute')) {
                 if (!in_array($p->id, $this->input->post->pages)) $checked = '';
             }
 
